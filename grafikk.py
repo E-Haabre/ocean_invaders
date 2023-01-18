@@ -31,8 +31,8 @@ sharkR2o_path = str(shark_path) + "\shark0(over).png"
 
 pirat_sprites = [piratskip1_path, piratskip0_path, piratskipm1_path, piratskip0_path]
 squid_sprites = [squid0_path, squid1_path]
-sharku_sprites = [sharkL2u_path, sharkL1u_path, shark0u_path, sharkR1u_path, sharkR2u_path, sharkR1u_path, sharkL1u_path]
-sharko_sprites = [sharkL2o_path, sharkL1o_path, shark0o_path, sharkR1o_path, sharkR2o_path]
+sharku_sprites = [sharkL2u_path, sharkL1u_path, shark0u_path, sharkR1u_path, sharkR2u_path, sharkR1u_path, shark0u_path, sharkL1u_path]
+sharko_sprites = [sharkL2o_path, sharkL1o_path, shark0o_path, sharkR1o_path, sharkR2o_path, sharkR1o_path, shark0o_path, sharkL1o_path]
 
 
 anicount = 0
@@ -62,10 +62,12 @@ class Animer:
         for i in range(0,len(self.sprite)):
             self.load.append(pygame.image.load(self.sprite[i]))
             self.transform.append(pygame.transform.scale(self.load[i], self.scale))
-
-    def animer(self):
         
-        window.blit(self.transform[self.count//self.tick], self.pos)
+        return self.transform
+
+    def animer(self, spritesheet):
+        
+        window.blit(spritesheet[self.count//self.tick], self.pos)
     
 """
 class Spillerbåt:
@@ -92,8 +94,8 @@ class fiender:
         s
 
                   
-#prep_båt = Animer(anicount,18,pirat_sprites, (120,120), 0).prep()
-#prep_squid = Animer(anicount,18,squid_sprites, (60,120), 0).prep()
+prep_båt = Animer(0,0,pirat_sprites, (120,120), 0).prep()
+prep_squid = Animer(0,0,squid_sprites, (60,120), 0).prep()
 prep_sharku = Animer(0,0,sharku_sprites, (60,120), 0).prep()
 
 
@@ -113,7 +115,7 @@ while True:
     clock.tick(fps)
 
     #Spillerbåt(anicount).idle()
-    Animer(anicount,10, 0, 0, (400, 400)).animer()
+    Animer(anicount,18, 0, 0, (400, 400)).animer(prep_båt)
     anicount +=1
     if anicount >= 72:
         anicount=0
