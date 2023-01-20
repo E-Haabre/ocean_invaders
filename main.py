@@ -7,12 +7,16 @@ import sys
 from pathlib import Path
 import random
 
+class Player():
+    def __init__(self, window, windowWidth, windowHeight):
+        pass
+
 class Enemy():
     def __init__(self, window, windowWidth, windowHeight, speed) -> None:
         self.window = window
         self.windowWidth = windowWidth
         self.windowHeigth = windowHeight
-        pathToShip = str(BASE_PATH) + '/Grafikk/Piratskip1.png'
+        pathToShip = BASE_PATH / 'Grafikk/Shark/shark0(over).png'
         self.enemyImage = pygame.image.load(pathToShip)
         self.enemyImage = pygame.transform.rotate(self.enemyImage,180)
         self.enemyImage = pygame.transform.scale(self.enemyImage, (SHIP_WIDTH_HEIGHT, SHIP_WIDTH_HEIGHT))
@@ -23,12 +27,11 @@ class Enemy():
         self.speed = speed
 
     def spawn(self, x, y):
-        print(x,y)
         self.x = x
         self.y = y
         self.enemyRect.left = self.x
 
-    def updatePOS(self):
+    def update(self):
         ind = enemies.index(self)
         other = enemies.copy()
         other.pop(ind)
@@ -44,6 +47,9 @@ class Enemy():
     def draw(self):
         window.blit(self.enemyImage, self.enemyRect)
 
+    #def __del__(self):
+    #    print("deleted")
+
 class Explosion():
     def __init__(self, window, windowWidth, windowHeight, x, y, radius):
         self.window = window
@@ -53,20 +59,21 @@ class Explosion():
         self.y = y
         self.radius = radius
         self.curRadius = 1
-
-    def spawn(self):
-        self.circle = pygame.draw.circle(self.window, EXPLOSION1, (self.x, self.y), 1)
+        self.minus = radius/5
 
     def update(self):
-        if self.circle != self.curRadius:
+        if self.radius != self.curRadius:
             self.circle = pygame.draw.circle(self.window, EXPLOSION1, (self.x, self.y), self.radius-self.curRadius)
-            self.circle = pygame.draw.circle(self.window, EXPLOSION2, (self.x, self.y), self.radius-self.curRadius-1)
-            self.circle = pygame.draw.circle(self.window, EXPLOSION3, (self.x, self.y), self.radius-self.curRadius-2)
-            self.circle = pygame.draw.circle(self.window, EXPLOSION4, (self.x, self.y), self.radius-self.curRadius-3)
-            self.circle = pygame.draw.circle(self.window, EXPLOSION5, (self.x, self.y), self.radius-self.curRadius-4)
+            self.circle = pygame.draw.circle(self.window, EXPLOSION2, (self.x, self.y), self.radius-self.curRadius-self.minus)
+            self.circle = pygame.draw.circle(self.window, EXPLOSION3, (self.x, self.y), self.radius-self.curRadius-(self.minus*2))
+            self.circle = pygame.draw.circle(self.window, EXPLOSION4, (self.x, self.y), self.radius-self.curRadius-(self.minus*3))
+            self.circle = pygame.draw.circle(self.window, EXPLOSION5, (self.x, self.y), self.radius-self.curRadius-(self.minus*4))
             self.curRadius = self.curRadius + 1
         else:
-            del self
+            explosions.remove(self)
+
+    #def __del__(self):
+    #    print("deleted")
 
 class bullet_Gen():
 
@@ -85,9 +92,18 @@ class bullet_Gen():
 
     def update(self):
         self.y = self.y - self.speed
+        if self.y < 0 - self.radius:
+            bullets.remove(self)
+        elif any([bullet.circle.colliderect(enemy.enemyRect) for enemy in enemies]):
+            anExplosion = Explosion(window, WINDOW_WIDTH, WINDOW_HEIGHT, bullet.x, bullet.y, 20)
+            explosions.append(anExplosion)
+            bullets.remove(self)
 
     def draw(self):
         self.circle = pygame.draw.circle(self.window, BLACK, (self.x, self.y), self.radius)
+
+    #def __del__(self):
+    #    print("deleted")
 
 
 # 2 - Define constants
@@ -116,7 +132,7 @@ window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 clock = pygame.time.Clock()
  
 # 4 - Load assets: image(s), sound(s),  etc.
-pathToShip = str(BASE_PATH) + '/Grafikk/Piratskip1.png'
+pathToShip = BASE_PATH / 'Grafikk/Pirat_spiller/Piratskip0.png'
 shipImage = pygame.image.load(pathToShip)
 shipImage = pygame.transform.rotate(shipImage,90)
 shipImage = pygame.transform.scale(shipImage, (SHIP_WIDTH_HEIGHT, SHIP_WIDTH_HEIGHT))
@@ -136,7 +152,7 @@ while True:
     # 7 - Check for and handle events
     for event in pygame.event.get():
         # Clicked the close button? Quit pygame and end the program 
-        if event.type == pygame.QUIT:           
+        if event.type == pygame.QUIT:    
             pygame.quit()  
             sys.exit()
 
@@ -158,32 +174,19 @@ while True:
     for bullet in bullets:
         bullet.update()
     for enemy in enemies:
-        enemy.updatePOS()
-    for explosion in explosions:
-        explosions.update()
-
-
-    #if ballRect.colliderect(targetRect):
-    #    print('BALL IS TOUCHING THE TARGET!')
-    #else:
-    #    print('ball is not touching the target')
+        enemy.update()
     
     # 9 - Clear the window
     window.fill(OCEAN_COLOR)
     
     # 10 - Draw all window elements
-    # draw ball at position 100 across (x) and 200 down (y)
-    #window.blit(targetImage, (TARGET_X, TARGET_Y))
     for bullet in bullets:
-        if bullet.y < 0:
-            del bullet
-        elif any([bullet.circle.colliderect(enemy.enemyRect) for enemy in enemies]):
-            anExplosion = Explosion(window, WINDOW_WIDTH, WINDOW_HEIGHT, bullet.x, bullet.y, 5)
-            del bullet
-        else:
-            bullet.draw()
+        bullet.draw()
     for enemy in enemies:
         enemy.draw()
+    for explosion in explosions:
+        explosion.update()
+    
     window.blit(shipImage, shipRect)    
     
 
