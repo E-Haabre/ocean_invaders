@@ -16,20 +16,30 @@ WINDOW = pygame.display.set_mode((window_width, window_height))
 CLOCK = pygame.time.Clock()
 
 class Animer:
-    def __init__(self, count, sprite, scale, pos):
+    def __init__(self, count, sprite, scale, rotation, pos=0, rect = False):
         self.count = count
         self.sprite = sprite
         self.pos = pos
+        self.rotation = rotation
         self.load = []
         self.transform = []
+        self.rotate = []
         self.scale = scale
+        self.rect = rect
 
     def prep(self):
         for i in range(0,len(self.sprite)):
             self.load.append(pygame.image.load(self.sprite[i]))
-            self.transform.append(pygame.transform.scale(self.load[i], self.scale))
-        
+            self.rotate.append(pygame.transform.rotate(self.load[i], self.rotation))
+            self.transform.append(pygame.transform.scale(self.rotate[i], self.scale))
+            
+        if self.rect == True:
+            self.ent_rect = self.transform[0].get_rect()
+            return self.ent_rect
+
         return self.transform
+    
+        
 
     def animer(self, spritesheet):
         tick = int(72/len(spritesheet))
@@ -61,7 +71,7 @@ class Fiender:
         else:
             return prep_sharku
                   
-prep_båt = Animer(0,pirat_sprites, (120,120), 0).prep()
+prep_båt = Animer(0,pirat_sprites, (120,120), 90).prep()
 
 prep_squido = Animer(0,squido_sprites, (60,120), 0).prep()
 prep_squid_dykk = Animer(0,squid_dykk_sprites, (60,120), 0).prep()
@@ -72,6 +82,7 @@ prep_sharku = Animer(0,sharku_sprites, (60,120), 0).prep()
 prep_sharko = Animer(0,sharko_sprites, (60,120), 0).prep()
 
 
+"""
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -82,9 +93,9 @@ while True:
 
     CLOCK.tick(fps)
 
-    Animer(count, 0, 0, (400, 350)).animer(Fiender(runde).shark())
-    Animer(count, 0, 0, (400,500)).animer(prep_båt)
-    Animer(count, 0, 0, (200,500)).animer(Fiender(runde).squid())
+    Animer(count, 0, 0, 0, (400, 350)).animer(Fiender(runde).shark())
+    Animer(count, 0, 0, 0, (400,500)).animer(prep_båt)
+    Animer(count, 0, 0, 0, (200,500)).animer(Fiender(runde).squid())
 
     count +=1
     if count >= 72:
@@ -94,3 +105,4 @@ while True:
             runde = 0
     
     pygame.display.update()
+"""

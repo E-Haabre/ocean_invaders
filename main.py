@@ -6,24 +6,25 @@ from pygame.locals import *
 import sys
 from pathlib import Path
 import random
+from grafikk import *
 
 class Enemy():
     def __init__(self, window, windowWidth, windowHeight, speed) -> None:
         self.window = window
         self.windowWidth = windowWidth
         self.windowHeigth = windowHeight
-        pathToShip = str(BASE_PATH) + '/Grafikk/Piratskip1.png'
-        self.enemyImage = pygame.image.load(pathToShip)
-        self.enemyImage = pygame.transform.rotate(self.enemyImage,180)
-        self.enemyImage = pygame.transform.scale(self.enemyImage, (SHIP_WIDTH_HEIGHT, SHIP_WIDTH_HEIGHT))
-        self.enemyRect = self.enemyImage.get_rect()
+        #pathToShip = str(BASE_PATH) + '/Grafikk/Pirat_spiller/Piratskip1.png'
+        #self.enemyImage = pygame.image.load(pathToShip)
+        #self.enemyImage = pygame.transform.rotate(self.enemyImage,180)
+        #self.enemyImage = pygame.transform.scale(self.enemyImage, (SHIP_WIDTH_HEIGHT, SHIP_WIDTH_HEIGHT))
+        self.enemyRect = Animer(0,sharko_sprites,(60,120),0,0, True).prep()
         self.x = 0
         self.y = - SHIP_WIDTH_HEIGHT
         self.enemyRect.top = self.y
         self.speed = speed
 
     def spawn(self, x, y):
-        print(x,y)
+        #print(x,y)
         self.x = x
         self.y = y
         self.enemyRect.left = self.x
@@ -42,7 +43,7 @@ class Enemy():
             self.enemyRect.left = self.enemyRect.left + (self.speed * fortegn)
     
     def draw(self):
-        window.blit(self.enemyImage, self.enemyRect)
+        Animer(count, 0, 0, 0, self.enemyRect).animer(Fiender(runde).shark())
 
 class Explosion():
     def __init__(self, window, windowWidth, windowHeight, x, y, radius):
@@ -77,14 +78,16 @@ class bullet_Gen():
         self.ship = ship
         self.speed = speed
         self.radius = 1
-        
+
         self.x = self.ship[0] + (self.ship[2]/32*(32-12))
         self.y = self.ship[1] + (self.ship[3]/32*9)
+
 
         self.circle = pygame.draw.circle(self.window, BLACK, (self.x, self.y), self.radius)
 
     def update(self):
         self.y = self.y - self.speed
+
 
     def draw(self):
         self.circle = pygame.draw.circle(self.window, BLACK, (self.x, self.y), self.radius)
@@ -103,7 +106,7 @@ OCEAN_COLOR = (212, 241, 249)
 OCEAN_COLOR = (118, 200, 213)
 WINDOW_WIDTH = 1366
 WINDOW_HEIGHT = 768
-FRAMES_PER_SECOND = 30
+FRAMES_PER_SECOND = 28
 SHIP_WIDTH_HEIGHT = 100
 MAX_WIDTH = WINDOW_WIDTH - SHIP_WIDTH_HEIGHT
 MAX_HEIGHT = WINDOW_HEIGHT - SHIP_WIDTH_HEIGHT
@@ -116,7 +119,7 @@ window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 clock = pygame.time.Clock()
  
 # 4 - Load assets: image(s), sound(s),  etc.
-pathToShip = str(BASE_PATH) + '/Grafikk/Piratskip1.png'
+pathToShip = str(BASE_PATH) + '/Grafikk/Pirat_spiller/Piratskip1.png'
 shipImage = pygame.image.load(pathToShip)
 shipImage = pygame.transform.rotate(shipImage,90)
 shipImage = pygame.transform.scale(shipImage, (SHIP_WIDTH_HEIGHT, SHIP_WIDTH_HEIGHT))
@@ -184,7 +187,15 @@ while True:
             bullet.draw()
     for enemy in enemies:
         enemy.draw()
-    window.blit(shipImage, shipRect)    
+    #window.blit(shipImage, shipRect)
+    Animer(count, 0, 0, 90, shipRect).animer(prep_båt)   
+
+    count +=1
+    if count >= 72:
+        count=0
+        runde += 1
+        if runde == 8:
+            runde = 0 
     
 
     # 11 - Update the window
