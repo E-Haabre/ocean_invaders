@@ -1,6 +1,5 @@
 import pygame
 from pygame.locals import *
-import sys
 from sprites import *
 
 count = 0
