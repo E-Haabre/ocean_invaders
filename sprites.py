@@ -35,5 +35,10 @@ squido_sprites = [squido0_path, squido1_path, squido0_path, squido1_path]
 squid_dykk_sprites = [squid_dykk1_path, squid_dykk2_path, squid_dykk1_path, squid_dykk2_path]
 squid_opp_sprites = [squid_dykk2_path, squid_dykk1_path, squid_dykk2_path, squid_dykk1_path]
 squidu_sprites = [squid0u_path, squid1u_path, squid2u_path, squid1u_path]
+
 sharku_sprites = [sharkR1u_path, sharkR2u_path, sharkR1u_path, shark0u_path, sharkL1u_path, sharkL2u_path, sharkL1u_path,shark0u_path]
 sharko_sprites = [sharkR1o_path, sharkR2o_path, sharkR1o_path, shark0o_path, sharkL1o_path, sharkL2o_path, sharkL1o_path, shark0o_path]
+
+piratrect = (1,0.5)
+squidrect = (1,0.5)
+sharkrect = (0.5,0.9)

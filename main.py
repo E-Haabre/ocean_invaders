@@ -6,7 +6,9 @@ from pygame.locals import *
 import sys
 from pathlib import Path
 import random
+from sprites import *
 from grafikk import *
+
 
 class Player():
     def __init__(self, window, windowWidth, windowHeight, ship_width_height):
@@ -14,20 +16,29 @@ class Player():
         self.windowWidth = windowWidth
         self.windowHeigth = windowHeight
         self.ship_width_height = ship_width_height
-        self.playerEntity = Animer(pirat_sprites, (ship_width_height, ship_width_height), 90, 0)
+        #self.hitbox = (self.x, self.y, self.width, self.height)
+        self.playerEntity = Animer(pirat_sprites, (ship_width_height, ship_width_height), 90)
         self.playerEntity.prep()
         self.playerRect = self.playerEntity.ent_rect
         self.playerRect.left = self.windowWidth/2
         self.playerRect.top = self.windowHeigth - (self.windowHeigth/20) - ship_width_height
+        self.playerHitbox = self.playerRect.copy()
+        self.playerHitbox.inflate_ip(-2, -46)
         self.cannons = [(self.playerRect[2]/32*16.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*19.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*22.5, self.playerRect[3]/32*10)]
+        self.cannon_timer = 0
 
     def shoot(self, cannon:int):
-        shootingPoint = (self.cannons[cannon][0] + self.playerRect.left, self.cannons[cannon][1] + self.playerRect.top)
-        aBullet = bullet_Gen(self.window, self.windowWidth, self.windowHeigth, shootingPoint, 5)
-        bullets.append(aBullet)
+        if self.cannon_timer <= 0:
+            shootingPoint = (self.cannons[cannon][0] + self.playerRect.left, self.cannons[cannon][1] + self.playerRect.top)
+            aBullet = bullet_Gen(self.window, self.windowWidth, self.windowHeigth, shootingPoint, 5)
+            bullets.append(aBullet)
+            self.cannon_timer = 28
 
     def update(self, count):
+        self.playerHitbox.clamp_ip(self.playerRect)
         self.playerEntity.animer(count)
+        pygame.draw.rect(window, (255,0,0), self.playerHitbox, 2)
+        """
         if (self.playerRect[2], self.playerRect[3]) != (self.ship_width_height, self.ship_width_height):
             width_height = self.playerRect[2] + 1
             self.playerEntity.scale = (width_height, width_height)
@@ -37,6 +48,8 @@ class Player():
             self.playerRect[3] += 1
             self.playerRect.top = self.windowHeigth - (self.windowHeigth/20) - self.playerRect[2]
             self.cannons = [(self.playerRect[2]/32*16.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*19.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*22.5, self.playerRect[3]/32*10)]
+        """
+        self.cannon_timer -= 1
 
     def evolve(self, size):
         self.ship_width_height = size
@@ -46,9 +59,13 @@ class Enemy():
         self.window = window
         self.windowWidth = windowWidth
         self.windowHeigth = windowHeight
-        self.enemyEntity = Animer(sharko_sprites,(enemyWidth,enemyHeight),0,0)
+        self.enemyEntity = Animer(squido_sprites,(enemyWidth,enemyHeight),0,sharkrect)
         self.enemyEntity.prep()
         self.enemyRect = self.enemyEntity.ent_rect
+        self.sharkHitbox = self.enemyRect.copy()
+        self.sharkHitbox.inflate_ip(-1,-20)
+        self.squidHitbox = self.enemyRect.copy()
+        self.squidHitbox.inflate_ip(-1,-40)
         self.x = 0
         self.y = - SHIP_WIDTH_HEIGHT
         self.enemyRect.top = self.y
@@ -58,12 +75,13 @@ class Enemy():
         self.x = x
         self.y = y
         self.enemyRect.left = self.x
+       
 
     def update(self):
         ind = enemies.index(self)
         other = enemies.copy()
         other.pop(ind)
-        if any([self.enemyRect.colliderect(enemy.enemyRect) for enemy in other]):
+        if any([self.squidHitbox.colliderect(enemy.squidHitbox) for enemy in other]):
             return
         if self.enemyRect.top != self.y:
             fortegn = (self.enemyRect.top - self.y) / abs(self.enemyRect.top - self.y)
@@ -71,10 +89,16 @@ class Enemy():
         if self.enemyRect.left != self.x:
             fortegn = (self.enemyRect.left - self.x) / abs(self.enemyRect.left - self.x)
             self.enemyRect.left = self.enemyRect.left + (self.speed * fortegn)
+        
+        
+        
 
     def draw(self, count, runde):
-        self.enemyEntity.shark(runde)
+        self.enemyEntity.squid(runde)
         self.enemyEntity.animer(count)
+        self.squidHitbox.clamp_ip(self.enemyRect)
+        pygame.draw.rect(window, (255,0,0), self.squidHitbox, 2)
+
 
 class Explosion():
     def __init__(self, window, windowWidth, windowHeight, x, y, radius):
@@ -115,10 +139,10 @@ class bullet_Gen():
 
     def update(self):
         self.y = self.y - self.speed
-        print(self.y)
+        #print(self.y)
         if self.y < 0 - self.radius:
             bullets.remove(self)
-        elif any([bullet.circle.colliderect(enemy.enemyRect) for enemy in enemies]):
+        elif any([bullet.circle.colliderect(enemy.enemyHitbox) for enemy in enemies]):
             anExplosion = Explosion(window, WINDOW_WIDTH, WINDOW_HEIGHT, bullet.x, bullet.y, 40)
             explosions.append(anExplosion)
             bullets.remove(self)
@@ -138,15 +162,15 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 OCEAN_COLOR = (212, 241, 249)
 OCEAN_COLOR = (118, 200, 213)
-WINDOW_WIDTH = 1366
+WINDOW_WIDTH = 500
 WINDOW_HEIGHT = 768
 FRAMES_PER_SECOND = 28
 SHIP_WIDTH_HEIGHT = 96
-ENEMY_WIDTH = 64
+ENEMY_WIDTH = 48
 ENEMY_HEIGHT = 96
 MAX_WIDTH = WINDOW_WIDTH - SHIP_WIDTH_HEIGHT
 MAX_HEIGHT = WINDOW_HEIGHT - SHIP_WIDTH_HEIGHT
-N_PIXELS_TO_MOVE = WINDOW_WIDTH / 200
+N_PIXELS_TO_MOVE = int(WINDOW_WIDTH / 200)
 
 # 3 - Initialize the world
 pygame.init()
@@ -175,7 +199,7 @@ while True:
         if event.type == pygame.QUIT:    
             pygame.quit()  
             sys.exit()
-
+    
     # 8  Do any "per frame" actions
     keyPressedTuple = pygame.key.get_pressed()
 
@@ -189,6 +213,7 @@ while True:
         aEnemy = Enemy(window, WINDOW_WIDTH, WINDOW_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 2)
         aEnemy.spawn(random.randint(ENEMY_WIDTH/2, WINDOW_WIDTH-ENEMY_WIDTH), 200)
         enemies.append(aEnemy)
+        #print(enemies)
     if keyPressedTuple[pygame.K_c]:
         player.evolve(200)
 
@@ -215,7 +240,7 @@ while True:
         runde += 1
         if runde == 8:
             runde = 0
-    
+
 
     # 11 - Update the window
     pygame.display.update()

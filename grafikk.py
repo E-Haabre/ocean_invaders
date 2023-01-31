@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 from sprites import *
 
-count = 0
+count = 0 
 runde = 0
 
 window_width = 1500
@@ -16,6 +16,7 @@ class Animer:
         self.pos = pos
         self.rotation = rotation
         self.scale = scale
+        
 
     def prep(self, spriteList:list = None, new_rect = True):
         self.transformed = []
@@ -30,7 +31,9 @@ class Animer:
         if new_rect == True:
             self.ent_rect = self.transformed[0].get_rect()
 
-    def squid(self):
+     
+
+    def squid(self, runde):
         if runde == 3:
             self.prep(squid_dykk_sprites, False)
         elif runde == 7:
@@ -49,3 +52,8 @@ class Animer:
     def animer(self,count):
         tick = int(72/len(self.transformed))
         WINDOW.blit(self.transformed[count//tick], self.ent_rect)
+        
+        
+        
+        
+#(self.ent_rect[0], self.rect[1]))
