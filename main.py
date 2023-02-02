@@ -185,8 +185,8 @@ class bullet_Gen():
             bullets.remove(self)
             return
         if self.enemyFire == True:
-            anExplosion = Explosion(window, self.windowWidth, self.windowHeigth, bullet.x, bullet.y, self.radius)
-            explosions.append(anExplosion)
+            #anExplosion = Explosion(window, self.windowWidth, self.windowHeigth, bullet.x, bullet.y, self.radius)
+            #explosions.append(anExplosion)
             if bullet.circle.colliderect(player.playerHitbox):
                 anExplosion = Explosion(window, self.windowWidth, self.windowHeigth, bullet.x, bullet.y, self.radius*10)
                 explosions.append(anExplosion)
