@@ -3,7 +3,9 @@
 # 1 - Import packages
 import sys
 import random
+from sprites import *
 from grafikk import *
+
 
 class Player():
     def __init__(self, window, windowWidth, windowHeight, ship_width_height):
@@ -11,11 +13,14 @@ class Player():
         self.windowWidth = windowWidth
         self.windowHeigth = windowHeight
         self.ship_width_height = ship_width_height
+        #self.hitbox = (self.x, self.y, self.width, self.height)
         self.playerEntity = Animer(pirat_sprites, (ship_width_height, ship_width_height), 90)
         self.playerEntity.prep()
         self.playerRect = self.playerEntity.ent_rect
         self.playerRect.left = self.windowWidth/2
         self.playerRect.top = self.windowHeigth - (self.windowHeigth/20) - ship_width_height
+        self.playerHitbox = self.playerRect.copy()
+        self.playerHitbox.inflate_ip(-2, -46)
         self.lives = 3
         self.cannons = [(self.playerRect[2]/32*16.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*19.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*22.5, self.playerRect[3]/32*10)]
         self.cannonIndex = 0
@@ -35,7 +40,10 @@ class Player():
 
     def update(self, count):
         self.charge -=1
+        self.playerHitbox.clamp_ip(self.playerRect)
         self.playerEntity.animer(count)
+        pygame.draw.rect(window, (255,0,0), self.playerHitbox, 2)
+        """
         if (self.playerRect[2], self.playerRect[3]) != (self.ship_width_height, self.ship_width_height):
             width_height = self.playerRect[2] + 1
             self.playerEntity.scale = (width_height, width_height)
@@ -49,8 +57,7 @@ class Player():
                 self.playerRect.left += 0
             self.playerRect.top = self.windowHeigth - (self.windowHeigth/20) - self.playerRect[2]
             self.cannons = [(self.playerRect[2]/32*16.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*19.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*22.5, self.playerRect[3]/32*10)]
-        if any([(self.playerRect.colliderect(bullet.circle) and bullet.enemyFire == True) for bullet in bullets]):
-            self.lives -= 1
+        """
         if self.lives <= 0:
             pygame.quit()  
             sys.exit()
@@ -66,6 +73,10 @@ class Enemy():
         self.enemyEntity = Animer(sprites,(enemyWidth,enemyHeight),0,0)
         self.enemyEntity.prep()
         self.enemyRect = self.enemyEntity.ent_rect
+        #self.enemyHitbox = self.enemyRect.copy()
+        #self.enemyHitbox.inflate_ip(-1,-20)
+        #self.enemyHitbox = self.enemyRect.copy()
+        #self.enemyHitbox.inflate_ip(-1,-40)
         self.speed = speed
         self.shark = shark
         self.squid = squid
@@ -76,9 +87,13 @@ class Enemy():
         self.lives = 1
         self.charge = 0
         if self.shark == True:
+            self.enemyHitbox = self.enemyRect.copy()
+            self.enemyHitbox.inflate_ip(-1,-20)
             self.cannon = (self.enemyRect[2]/16*8, self.enemyRect[3]/32*22)
             self.color = (99, 142, 149)
         else:
+            self.enemyHitbox = self.enemyRect.copy()
+            self.enemyHitbox.inflate_ip(-1,-40)
             self.cannon = (self.enemyRect[2]/16*8, self.enemyRect[3]/32*17)
             self.color = (129, 142, 177)
 
@@ -102,11 +117,11 @@ class Enemy():
         ind = enemies.index(self)
         other = enemies.copy()
         other.pop(ind)
-        if any([(self.enemyRect.colliderect(bullet.circle) and bullet.enemyFire == False) for bullet in bullets]):
+        if any([(self.enemyHitbox.colliderect(bullet.circle) and bullet.enemyFire == False) for bullet in bullets]):
             self.lives -= 1
         if self.enemyEntity.shooting == True:
             self.shoot()
-        if any([self.enemyRect.colliderect(enemy.enemyRect) for enemy in other]):
+        if any([self.enemyHitbox.colliderect(enemy.enemyHitbox) for enemy in other]):
             return
         if self.enemyRect.top != self.y:
             fortegn = (self.enemyRect.top - self.y) / abs(self.enemyRect.top - self.y)
@@ -121,6 +136,9 @@ class Enemy():
         elif self.squid == True:
             self.enemyEntity.squid(runde)
         self.enemyEntity.animer(count)
+        self.enemyHitbox.clamp_ip(self.enemyRect)
+        pygame.draw.rect(window, (255,0,0), self.enemyHitbox, 2)
+
 
 class Explosion():
     def __init__(self, window, windowWidth, windowHeight, x, y, radius):
@@ -169,13 +187,13 @@ class bullet_Gen():
         if self.enemyFire == True:
             anExplosion = Explosion(window, self.windowWidth, self.windowHeigth, bullet.x, bullet.y, self.radius)
             explosions.append(anExplosion)
-            if bullet.circle.colliderect(player.playerRect):
+            if bullet.circle.colliderect(player.playerHitbox):
                 anExplosion = Explosion(window, self.windowWidth, self.windowHeigth, bullet.x, bullet.y, self.radius*10)
                 explosions.append(anExplosion)
                 bullets.remove(self)
                 player.lives -= 1
         else:
-            if any([bullet.circle.colliderect(enemy.enemyRect) for enemy in enemies]):
+            if any([bullet.circle.colliderect(enemy.enemyHitbox) for enemy in enemies]):
                 anExplosion = Explosion(window, self.windowWidth, self.windowHeigth, bullet.x, bullet.y, self.radius*10)
                 explosions.append(anExplosion)
                 bullets.remove(self)
@@ -280,11 +298,11 @@ WINDOW_WIDTH = 1366
 WINDOW_HEIGHT = 768
 FRAMES_PER_SECOND = 28
 SHIP_WIDTH_HEIGHT = 96
-ENEMY_WIDTH = 64
+ENEMY_WIDTH = 48
 ENEMY_HEIGHT = 96
 MAX_WIDTH = WINDOW_WIDTH - SHIP_WIDTH_HEIGHT
 MAX_HEIGHT = WINDOW_HEIGHT - SHIP_WIDTH_HEIGHT
-N_PIXELS_TO_MOVE = WINDOW_WIDTH / 200
+N_PIXELS_TO_MOVE = int(WINDOW_WIDTH / 200)
 
 # 3 - Initialize the world
 pygame.init()
@@ -313,7 +331,7 @@ while True:
         if event.type == pygame.QUIT:    
             pygame.quit()  
             sys.exit()
-
+    
     # 8  Do any "per frame" actions
     keyPressedTuple = pygame.key.get_pressed()
 
@@ -370,7 +388,7 @@ while True:
         runde += 1
         if runde == 8:
             runde = 0
-    
+
 
     # 11 - Update the window
     pygame.display.update()
