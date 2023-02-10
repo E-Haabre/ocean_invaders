@@ -13,6 +13,7 @@ sharko_sprites = [pygame.image.load(sprite) for sprite in sharko_sprites]
 count = 0
 runde = 0
 
+
 window_width = 1500
 window_height = 850
 

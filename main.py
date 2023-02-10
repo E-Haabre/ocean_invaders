@@ -7,21 +7,32 @@ from sprites import *
 from grafikk import *
 
 
+class Score():
+    def __init__(self, poeng):
+        self.poeng = poeng
+    
+    def endscreen(self, farge):
+        window.fill(farge)
+        font = pygame.font.SysFont(None, 58)
+        img = font.render(f'Din score ble {self.poeng}', True, (0,0,0))
+        window.blit(img, ((WINDOW_WIDTH*0.4), 100))
+
 class Player():
     def __init__(self, window, windowWidth, windowHeight, ship_width_height):
         self.window = window
         self.windowWidth = windowWidth
         self.windowHeigth = windowHeight
         self.ship_width_height = ship_width_height
-        #self.hitbox = (self.x, self.y, self.width, self.height)
         self.playerEntity = Animer(pirat_sprites, (ship_width_height, ship_width_height), 90)
         self.playerEntity.prep()
         self.playerRect = self.playerEntity.ent_rect
         self.playerRect.left = self.windowWidth/2
         self.playerRect.top = self.windowHeigth - (self.windowHeigth/20) - ship_width_height
         self.playerHitbox = self.playerRect.copy()
-        self.playerHitbox.inflate_ip(-2, -46)
+        self.hitbox_size = ((self.playerHitbox.width/32) * -1, (self.playerHitbox.height/32) * -16)
+        self.playerHitbox.inflate_ip(self.hitbox_size)
         self.lives = 3
+        self.invonurable = False
         self.cannons = [(self.playerRect[2]/32*16.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*19.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*22.5, self.playerRect[3]/32*10)]
         self.cannonIndex = 0
         self.charge = 0
@@ -43,30 +54,37 @@ class Player():
         self.playerHitbox.clamp_ip(self.playerRect)
         self.playerEntity.animer(count)
         pygame.draw.rect(window, (255,0,0), self.playerHitbox, 2)
-        """
+        
         if (self.playerRect[2], self.playerRect[3]) != (self.ship_width_height, self.ship_width_height):
             width_height = self.playerRect[2] + 1
             self.playerEntity.scale = (width_height, width_height)
             self.playerEntity.prep()
             self.playerEntity.ent_rect = self.playerRect
             if (self.playerRect[2], self.playerRect[3]) < (self.ship_width_height, self.ship_width_height):
+                self.invonurable = True
                 self.playerRect[2], self.playerRect[3] = self.playerRect[2] + 1, self.playerRect[3] + 1
                 self.playerRect.left -= 0
             elif (self.playerRect[2], self.playerRect[3]) > (self.ship_width_height, self.ship_width_height):
+                self.invonurable = False
                 self.playerRect[2], self.playerRect[3] = self.playerRect[2] - 1, self.playerRect[3] - 1
                 self.playerRect.left += 0
+                
             self.playerRect.top = self.windowHeigth - (self.windowHeigth/20) - self.playerRect[2]
+            self.playerHitbox = self.playerRect.copy()
+            self.hitbox_size = ((self.playerHitbox.width/32) * -1, (self.playerHitbox.height/32) * -16)
+            self.playerHitbox.inflate_ip(self.hitbox_size)
             self.cannons = [(self.playerRect[2]/32*16.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*19.5, self.playerRect[3]/32*10), (self.playerRect[2]/32*22.5, self.playerRect[3]/32*10)]
-        """
-        if self.lives <= 0:
-            pygame.quit()  
-            sys.exit()
+        
+        #if self.lives <= 0:
+            #pygame.quit()  
+            #sys.exit()
 
     def evolve(self, size):
         self.ship_width_height = size
 
 class Enemy():
     def __init__(self, window, windowWidth, windowHeight, enemyWidth, enemyHeight, speed, sprites, y, shark = False, squid = False) -> None:
+        global spawnrate
         self.window = window
         self.windowWidth = windowWidth
         self.windowHeigth = windowHeight
@@ -84,7 +102,7 @@ class Enemy():
         self.y = y
         self.enemyRect.top = self.y
         self.speed = speed
-        self.lives = 1
+        self.lives = abs(int(spawnrate) - 72)
         self.charge = 0
         if self.shark == True:
             self.enemyHitbox = self.enemyRect.copy()
@@ -110,8 +128,11 @@ class Enemy():
             self.charge = 28*3
 
     def update(self):
+        global spawnrate
         if self.lives == 0:
             enemies.remove(self)
+            score.poeng += round(1 * abs(int(spawnrate) - 72), 1)
+            spawnrate -= 0.2
             return
         self.charge -= 1
         ind = enemies.index(self)
@@ -191,7 +212,8 @@ class bullet_Gen():
                 anExplosion = Explosion(window, self.windowWidth, self.windowHeigth, bullet.x, bullet.y, self.radius*10)
                 explosions.append(anExplosion)
                 bullets.remove(self)
-                player.lives -= 1
+                if player.invonurable == False:
+                    player.lives -= 1
         else:
             if any([bullet.circle.colliderect(enemy.enemyHitbox) for enemy in enemies]):
                 anExplosion = Explosion(window, self.windowWidth, self.windowHeigth, bullet.x, bullet.y, self.radius*10)
@@ -216,7 +238,7 @@ class SpawnBox():
         else: 
             self.occupied = False
 
-def makeSpawn(min_boxes:int = 28):
+def makeSpawn(min_boxes:int = 50):
     space_x = 16
     space_y = 4
     height = ENEMY_HEIGHT
@@ -303,11 +325,15 @@ ENEMY_HEIGHT = 96
 MAX_WIDTH = WINDOW_WIDTH - SHIP_WIDTH_HEIGHT
 MAX_HEIGHT = WINDOW_HEIGHT - SHIP_WIDTH_HEIGHT
 N_PIXELS_TO_MOVE = int(WINDOW_WIDTH / 200)
+spawnrate = 71
+
 
 # 3 - Initialize the world
 pygame.init()
 window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 clock = pygame.time.Clock()
+poeng = 0
+score = Score(poeng)
  
 # 4 - Load assets: image(s), sound(s),  etc.
 
@@ -331,67 +357,70 @@ while True:
         if event.type == pygame.QUIT:    
             pygame.quit()  
             sys.exit()
-    
-    # 8  Do any "per frame" actions
-    keyPressedTuple = pygame.key.get_pressed()
+    if player.lives > 0:
 
-    if keyPressedTuple[pygame.K_LEFT]:
-        player.playerRect.left = player.playerRect.left - N_PIXELS_TO_MOVE
-    if keyPressedTuple[pygame.K_RIGHT]:
-        player.playerRect.left = player.playerRect.left + N_PIXELS_TO_MOVE
-    if keyPressedTuple[pygame.K_SPACE]:
-        player.shoot()
-    if keyPressedTuple[pygame.K_UP]:
-        index = random.randint(0, len(spawnLocations)-1)
-        shark_or_squid = random.randint(0,1)
-        box = spawnLocations[index]
-        if box.occupied == False and len(enemies) <= len(spawnLocations):
-            spawnLocation = box.pos
-            if shark_or_squid == 1:
-                aEnemy = Enemy(window, WINDOW_WIDTH, WINDOW_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 2, squido_sprites, spawnLocation[1], shark = True)
-            else:
-                aEnemy = Enemy(window, WINDOW_WIDTH, WINDOW_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 2, squido_sprites, spawnLocation[1], squid = True)
-            aEnemy.spawn(spawnLocation[0], 200)
-            enemies.append(aEnemy)
-    if keyPressedTuple[pygame.K_c]:
-        player.evolve(200)
-    if keyPressedTuple[pygame.K_x]:
-        player.evolve(100)
+        # 8  Do any "per frame" actions
+        keyPressedTuple = pygame.key.get_pressed()
 
-    for enemy in enemies:
-        enemy.update()
-    for bullet in bullets:
-        bullet.update()
-    for spawnBox in spawnLocations:
-        spawnBox.update()
-    
-    # 9 - Clear the window
-    window.fill(OCEAN_COLOR)
-    
-    # 10 - Draw all window elements
-    if any([count%6 == 0]):
-        noe = Water(window, WINDOW_WIDTH, WINDOW_HEIGHT)
-        whites.append(noe)
-    for white in whites:
-        white.update()
-    player.update(count)
-    for bullet in bullets:
-        bullet.draw()
-    for enemy in reversed(enemies):
-        enemy.draw(count, runde)
-    for explosion in explosions:
-        explosion.update()
+        if keyPressedTuple[pygame.K_LEFT]:
+            player.playerRect.left = player.playerRect.left - N_PIXELS_TO_MOVE
+        if keyPressedTuple[pygame.K_RIGHT]:
+            player.playerRect.left = player.playerRect.left + N_PIXELS_TO_MOVE
+        if keyPressedTuple[pygame.K_SPACE]:
+            player.shoot()
+              
+        if count >= spawnrate:
+            index = random.randint(0, len(spawnLocations)-1)
+            shark_or_squid = random.randint(0,1)
+            box = spawnLocations[index]
+            if box.occupied == False and len(enemies) <= len(spawnLocations):
+                spawnLocation = box.pos
+                if shark_or_squid == 1:
+                    aEnemy = Enemy(window, WINDOW_WIDTH, WINDOW_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 2, squido_sprites, spawnLocation[1], shark = True)
+                else:
+                    aEnemy = Enemy(window, WINDOW_WIDTH, WINDOW_HEIGHT, ENEMY_WIDTH, ENEMY_HEIGHT, 2, squido_sprites, spawnLocation[1], squid = True)
+                aEnemy.spawn(spawnLocation[0], 200)
+                enemies.append(aEnemy)
+        if keyPressedTuple[pygame.K_c]:
+            player.evolve(200)
+        if keyPressedTuple[pygame.K_x]:
+            player.evolve(100)
 
-    count +=1
-    if count >= 72:
-        count=0
-        runde += 1
-        if runde == 8:
-            runde = 0
+        for enemy in enemies:
+            enemy.update()
+        for bullet in bullets:
+            bullet.update()
+        for spawnBox in spawnLocations:
+            spawnBox.update()
 
+        # 9 - Clear the window
+        window.fill(OCEAN_COLOR)
+
+        # 10 - Draw all window elements
+        if any([count%6 == 0]):
+            noe = Water(window, WINDOW_WIDTH, WINDOW_HEIGHT)
+            whites.append(noe)
+        for white in whites:
+            white.update()
+        player.update(count)
+        for bullet in bullets:
+            bullet.draw()
+        for enemy in reversed(enemies):
+            enemy.draw(count, runde)
+        for explosion in explosions:
+            explosion.update()
+
+        count +=1
+        if count >= 72:
+            count=0
+            runde += 1
+            if runde == 8:
+                runde = 0
+
+    if player.lives <= 0:
+        score.endscreen(OCEAN_COLOR)
 
     # 11 - Update the window
     pygame.display.update()
-
     # 12 - Slow things down a bit
     clock.tick(FRAMES_PER_SECOND)  # make pygame wait
