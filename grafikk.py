@@ -10,6 +10,7 @@ squidu_sprites = [pygame.image.load(sprite) for sprite in squidu_sprites]
 sharku_sprites = [pygame.image.load(sprite) for sprite in sharku_sprites]
 sharko_sprites = [pygame.image.load(sprite) for sprite in sharko_sprites]
 
+
 count = 0
 runde = 0
 
